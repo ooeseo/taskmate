@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskMate</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>📚 TaskMate</h1>
+        <p>대학생 과제 및 시험 일정 관리</p>
+
+        <div class="form">
+            <input type="text" id="subject" placeholder="과목명">
+
+            <select id="type">
+                <option value="과제">과제</option>
+                <option value="시험">시험</option>
+            </select>
+
+            <input type="text" id="title" placeholder="과제 또는 시험명">
+            <input type="date" id="date">
+
+            <button onclick="addTask()">추가</button>
+        </div>
+
+        <div id="taskList"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 700px;
+    margin: auto;
+}
+
+h1 {
+    text-align: center;
+}
+
+p {
+    text-align: center;
+    color: gray;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+input, select, button {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+button {
+    background: #4f46e5;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+.card {
+    background: white;
+    padding: 15px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.done {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+.actions {
+    margin-top: 10px;
+}
+
+.actions button {
+    margin-right: 5px;
+}
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+function saveTasks() {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+function calculateDday(date) {
+    const today = new Date();
+    const target = new Date(date);
+
+    const diff = Math.ceil(
+        (target - today) / (1000 * 60 * 60 * 24)
+    );
+
+    if (diff > 0) return `D-${diff}`;
+    if (diff === 0) return "D-Day";
+    return `D+${Math.abs(diff)}`;
+}
+
+function renderTasks() {
+    const list = document.getElementById("taskList");
+    list.innerHTML = "";
+
+    tasks.forEach((task, index) => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+            <h3 class="${task.done ? "done" : ""}">
+                [${task.type}] ${task.title}
+            </h3>
+
+            <p>과목: ${task.subject}</p>
+            <p>날짜: ${task.date}</p>
+            <p>${calculateDday(task.date)}</p>
+
+            <div class="actions">
+                <button onclick="toggleDone(${index})">
+                    ${task.done ? "취소" : "완료"}
+                </button>
+
+                <button onclick="deleteTask(${index})">
+                    삭제
+                </button>
+            </div>
+        `;
+
+        list.appendChild(card);
+    });
+}
+
+function addTask() {
+    const subject = document.getElementById("subject").value;
+    const type = document.getElementById("type").value;
+    const title = document.getElementById("title").value;
+    const date = document.getElementById("date").value;
+
+    if (!subject || !title || !date) {
+        alert("모든 항목을 입력하세요.");
+        return;
+    }
+
+    tasks.push({
+        subject,
+        type,
+        title,
+        date,
+        done: false
+    });
+
+    saveTasks();
+    renderTasks();
+
+    document.getElementById("subject").value = "";
+    document.getElementById("title").value = "";
+    document.getElementById("date").value = "";
+}
+
+function toggleDone(index) {
+    tasks[index].done = !tasks[index].done;
+    saveTasks();
+    renderTasks();
+}
+
+function deleteTask(index) {
+    tasks.splice(index, 1);
+    saveTasks();
+    renderTasks();
+}
+
+renderTasks();
